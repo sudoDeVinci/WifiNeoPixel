@@ -11,10 +11,13 @@ N = const(300)
 DISPLAY = NeoPixel(Pin(16), N, timing = 1)
 
 COLOR_ZERO = const((0, 0, 0))
-COLOR_LOW = const((20, 20, 20))
-COLOR_MID = const((60, 60, 60))
-COLOR_HIGH = const((100, 100, 100))
+COLOR_LOW = const((5, 5, 5))
+COLOR_MID = const((10, 10, 10))
+COLOR_HIGH = const((15, 15, 15))
+COLOR = const((25,25,25))
 LEVELS = const((0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300))
+
+BRIGHTNESS = 0.1
 
 def reset_display() -> None:
     global DISPLAY
@@ -28,32 +31,29 @@ def fade_in(target_index: int) -> None:
             
             DISPLAY[i] = COLOR_LOW
             DISPLAY.write()
-            sleep_ms(100)
 
             DISPLAY[i] = COLOR_MID
             DISPLAY.write()
-            sleep_ms(100)
-
+            
             DISPLAY[i] = COLOR_HIGH
             DISPLAY.write()
-            sleep_ms(100)
+            
+            DISPLAY[i] = COLOR
+            DISPLAY.write()
 
 def fade_out(start_index: int, end_index: int) -> None:
     global DISPLAY
-    for i in reversed(range(start_index, end_index+1)):
-        if DISPLAY[i] == COLOR_HIGH:
+    for i in reversed(range(start_index, end_index)):
+        if DISPLAY[i] == COLOR:
             
             DISPLAY[i] = COLOR_MID
             DISPLAY.write()
-            sleep_ms(100)
             
             DISPLAY[i] = COLOR_LOW
             DISPLAY.write()
-            sleep_ms(100)
 
             DISPLAY[i] = COLOR_ZERO
             DISPLAY.write()
-            sleep_ms(100)
     
 
 @app.route('/favicon.ico')
@@ -75,14 +75,23 @@ def index_get(request)-> Response:
 def index_post(request) -> None:
     global last_value
     
-    level = int(request.json.get('luminance'))
-    if 0 > level or level > 300: return
+    label = request.json.get('label')
+    value = int(request.json.get('value'))
+    
+    if label == 'level':
+        level = value
+        if 0 > level or level > 300: return
 
-    if last_value > level:
-        fade_out(LEVELS[level], LEVELS[last_value])
+        if last_value > level:
+            fade_out(LEVELS[level], LEVELS[last_value])
+                
+        if last_value < level:
+            fade_in(LEVELS[level])
             
-    if last_value < level:
-        fade_in(LEVELS[level])
+        last_value = level
+            
+    elif label == 'brightness':
+        pass
+        
             
     DISPLAY.write()
-    last_value = level

@@ -22,7 +22,7 @@ from server import app, reset_display
 ssid = ''
 password = ''
 
-with open ('config.json', 'r') as f:
+with open ('conf.json', 'r') as f:
     data = json.load(f)
     ssid = data['SSID']
     password = data['PASSWORD']
